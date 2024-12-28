@@ -97,6 +97,7 @@ public class Tasks {
         SELECT
             tasks.taskName,
             organization.orgName,
+            tasks.organizationID,
             users.FirstName AS primaryContactFirstName,
             users.LastName AS primaryContactLastName,
             tasks.otherContactIDs,
@@ -125,6 +126,7 @@ public class Tasks {
             if (resultSet != null && resultSet.next()) {
                 String taskName = resultSet.getString("tasks.taskName");
                 String orgName = resultSet.getString("organization.orgName");
+                String orgID = resultSet.getString("tasks.organizationID");
                 String primaryContactFirstName = resultSet.getString("primaryContactFirstName");
                 String primaryContactLastName = resultSet.getString("primaryContactLastName");
                 String otherContactIDs = resultSet.getString("tasks.otherContactIDs");
@@ -138,9 +140,9 @@ public class Tasks {
                     String[] otherContactIDsArray = otherContactIDs.split(",");
 
                     for (String userID : otherContactIDsArray) {
-                        String[] userData = Users.getOneUser(userID.trim()); // Assuming getOneUser accepts a String userID
+                        String[] userData = Users.getOneUser(userID.trim());
                         if (userData != null && userData.length >= 3) {
-                            String userFullName = userData[1] + " " + userData[2]; // Assuming userData[1] is FirstName and userData[2] is LastName
+                            String userFullName = userData[1] + " " + userData[2];
                             userDataList.add(userFullName);
                         }
                     }
@@ -166,6 +168,7 @@ public class Tasks {
                         String.valueOf(taskID),
                         taskName,
                         orgName,
+                        orgID,
                         primaryContactFirstName + " " + primaryContactLastName,
                         String.join(", ", userDataList),
                         String.join(", ", computerDataList),
@@ -200,6 +203,50 @@ public class Tasks {
                     System.out.println("INFO: Task deleted successfully.");
                 } else {
                     System.err.println("ERROR: Task not deleted.");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("ERROR: Failed to execute query: " + e.getMessage());
+        }
+    }
+
+    public static void updateTask(){
+        Scanner scanner = new Scanner(System.in);
+
+        String[] currentTaskData = getOneTask();
+
+        System.out.println("----------------------------------------------------------");
+        System.out.println("Current Task name: " + currentTaskData[1]);
+        System.out.print("Enter the new task name (leave blank to keep current): ");
+        String newTaskName = scanner.nextLine().trim();
+
+        System.out.println("Current Organization ID: " + currentTaskData[3]);
+        System.out.print("Enter the new Organization name (leave blank to keep current): ");
+        String taskOrganizationID = scanner.nextLine().trim();
+
+        if (newTaskName.isEmpty()) {
+            newTaskName = currentTaskData[1];
+        }
+        if (taskOrganizationID.isEmpty()) {
+            taskOrganizationID = currentTaskData[3];
+        }
+
+        String query = "UPDATE patching_calender_tasks SET taskName = ?, organizationID = ?  WHERE taskID = ?";
+        System.out.println("INFO: Updating Task - ID: " + currentTaskData[0]);
+
+        try (Connection connection = connectToDatabase()) {
+            assert connection != null;
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, newTaskName);
+                preparedStatement.setInt(2, Integer.parseInt(taskOrganizationID));
+                preparedStatement.setInt(3, Integer.parseInt(currentTaskData[0]));
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    System.out.println("INFO: Task updated successfully.");
+                } else {
+                    System.err.println("ERROR: Task not found or not updated.");
                 }
             }
         } catch (SQLException e) {

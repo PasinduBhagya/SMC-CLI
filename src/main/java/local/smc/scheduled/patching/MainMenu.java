@@ -71,6 +71,8 @@ public class MainMenu {
                     System.out.printf(" %-25s %-50s%n", "get-task", "To get information about one task");
                     System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
                     System.out.printf(" %-25s %-50s%n", "delete-task", "To delete task");
+                    System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
+                    System.out.printf(" %-25s %-50s%n", "update-task", "To update task");
                     System.out.println("=============================================================================================================================\n\n");
                     System.out.println("=============================================================================");
                     System.out.printf(" %-25s %-50s%n", "quit", "Exits the program.");
@@ -178,20 +180,24 @@ public class MainMenu {
                     System.out.println("+----------------------+---------------------------------------------------------+");
                     System.out.printf("| %-20s | %-55s |%n", "Organization Name", taskData[2]);
                     System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Primary Contact", taskData[3]);
+                    System.out.printf("| %-20s | %-55s |%n", "Primary Contact", taskData[4]);
                     System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Secondary Contacts", taskData[4]);
+                    System.out.printf("| %-20s | %-55s |%n", "Secondary Contacts", taskData[5]);
                     System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Computer Names", taskData[5]);
+                    System.out.printf("| %-20s | %-55s |%n", "Computer Names", taskData[6]);
                     System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Created Date", taskData[6]);
+                    System.out.printf("| %-20s | %-55s |%n", "Created Date", taskData[7]);
                     System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Updated Date", taskData[7]);
+                    System.out.printf("| %-20s | %-55s |%n", "Updated Date", taskData[8]);
                     System.out.println("+----------------------+---------------------------------------------------------+");
                     break;
 
                     case "delete-task":
                     Tasks.deleteTask();
+                    break;
+
+                case "update-task":
+                    Tasks.updateTask();
                     break;
 
                 case "quit":
