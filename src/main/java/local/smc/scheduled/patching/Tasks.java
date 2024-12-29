@@ -221,25 +221,44 @@ public class Tasks {
         String newTaskName = scanner.nextLine().trim();
 
         System.out.println("Current Organization ID: " + currentTaskData[3]);
+        Organization.getAllOrganizations();
         System.out.print("Enter the new Organization name (leave blank to keep current): ");
-        String taskOrganizationID = scanner.nextLine().trim();
+        String organizationID = scanner.nextLine().trim();
+
+        if (organizationID.isEmpty()) {
+            organizationID = currentTaskData[3];
+        }
+
+        System.out.println("Current Primary Contact: " + currentTaskData[3]);
+        Users.getAllUsersByOrg(Integer.parseInt(organizationID));
+        System.out.print("Enter the new Primary Contact ID name (leave blank to keep current): ");
+        String primaryContactID = scanner.nextLine().trim();
+
+        System.out.println("Current Other Contacts: " + currentTaskData[3]);
+        System.out.print("Enter Other Contacts: (leave blank to keep current): ");
+        String otherContactIDs = scanner.nextLine().trim();
+
+        System.out.println("Current computer IDs: " + currentTaskData[3]);
+        Computers.getAllComputersByOrg(Integer.parseInt(organizationID));
+        System.out.print("Enter the new Computer IDs (leave blank to keep current): ");
+        String computerIDs = scanner.nextLine().trim();
+
 
         if (newTaskName.isEmpty()) {
             newTaskName = currentTaskData[1];
         }
-        if (taskOrganizationID.isEmpty()) {
-            taskOrganizationID = currentTaskData[3];
-        }
 
-        String query = "UPDATE patching_calender_tasks SET taskName = ?, organizationID = ?  WHERE taskID = ?";
+        String query = "UPDATE patching_calender_tasks SET taskName = ?, organizationID = ?, primaryContactID = ?, otherContactIDs = ?, computerIDs = ? WHERE taskID = ?";
         System.out.println("INFO: Updating Task - ID: " + currentTaskData[0]);
 
         try (Connection connection = connectToDatabase()) {
             assert connection != null;
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, newTaskName);
-                preparedStatement.setInt(2, Integer.parseInt(taskOrganizationID));
-                preparedStatement.setInt(3, Integer.parseInt(currentTaskData[0]));
+                preparedStatement.setInt(2, Integer.parseInt(organizationID));
+                preparedStatement.setInt(3, Integer.parseInt(primaryContactID));
+                preparedStatement.setString(4, otherContactIDs);
+                preparedStatement.setString(5, computerIDs);
 
                 int rowsAffected = preparedStatement.executeUpdate();
 

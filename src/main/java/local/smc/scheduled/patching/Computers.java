@@ -1,13 +1,27 @@
 package local.smc.scheduled.patching;
 
 import java.sql.*;
+import java.util.List;
 import java.util.Scanner;
 
 import static local.smc.common.Database.connectToDatabase;
 
 public class Computers {
     public static void getAllComputers() {
-        String query = "SELECT compID, compName, compOrganizationID FROM patching_calender_computers";
+
+        String query = """
+                SELECT
+                    pcc.compID,
+                    pcc.compName,
+                    pcc.compOrganizationID,
+                    org.orgName
+                FROM
+                    patching_calender_computers pcc
+                JOIN
+                    patching_calender_organizations org
+                ON
+                    pcc.compOrganizationID = org.orgID;
+                """;
 
         try (Connection connection = connectToDatabase();
              Statement statement = connection != null ? connection.createStatement() : null;
@@ -15,96 +29,174 @@ public class Computers {
 
             if (resultSet != null) {
 
-                System.out.println("+-----------------+--------------------------------+---------------------+");
-                System.out.println("| Computer ID     | Computer Name                  | Organization ID     |");
-                System.out.println("+-----------------+--------------------------------+---------------------+");
+                System.out.println("+-----------------+--------------------------------+-----------------------------+");
+                System.out.printf("| %-15s | %-30s | %-27s |\n", "Computer ID", "Computer Name", "Organization Name");
+                System.out.println("+-----------------+--------------------------------+-----------------------------+");
 
                 while (resultSet.next()) {
-                    int compID = resultSet.getInt("compID");
-                    String compName = resultSet.getString("compName");
-                    int compOrganizationID = resultSet.getInt("compOrganizationID");
+                    int compID = resultSet.getInt("pcc.compID");
+                    String compName = resultSet.getString("pcc.compName");
+                    String orgName = resultSet.getString("org.orgName");
 
-                    System.out.printf("| %-15d | %-30s | %-19d |\n", compID, compName, compOrganizationID);
-                    System.out.println("+-----------------+--------------------------------+---------------------+");
+                    System.out.printf("| %-15d | %-30s | %-27s |\n", compID, compName, orgName);
+                    System.out.println("+-----------------+--------------------------------+-----------------------------+");
                 }
-
-
-
             } else {
                 System.out.println("No computers found.");
             }
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
+
     }
 
     public static String[] getOneComputer() {
+
+        String query = """
+                SELECT
+                    pcc.compID,
+                    pcc.compName,
+                    pcc.compOrganizationID,
+                    org.orgName
+                FROM
+                    patching_calender_computers pcc
+                JOIN
+                    patching_calender_organizations org
+                ON
+                    pcc.compOrganizationID = org.orgID
+                WHERE
+                    pcc.compID = ?""";
+
         Scanner scanner = new Scanner(System.in);
-
-        System.out.println("----------------------------------------------------------");
-        System.out.print("Enter the Computer ID: ");
-
-        int compID = Integer.parseInt(scanner.nextLine());
-        String query = "SELECT compID, compName, compOrganizationID FROM patching_calender_computers WHERE compID = " + compID;
+        int compID;
         String[] computerData = null;
 
-        try (Connection connection = connectToDatabase();
-             Statement statement = connection != null ? connection.createStatement() : null;
-             ResultSet resultSet = statement != null ? statement.executeQuery(query) : null) {
+        System.out.println("--------------------------------------------------------------------------");
 
-            if (resultSet != null && resultSet.next()) {
-                String compName = resultSet.getString("compName");
-                int compOrganizationID = Integer.parseInt(resultSet.getString("compOrganizationID"));
-
-                computerData = new String[] {String.valueOf(compID), compName, String.valueOf(compOrganizationID)};
-
-            } else {
-                System.out.println("No Computer found with ID: " + compID);
+        while (true){
+            try {
+                System.out.print("Enter the Computer ID: ");
+                compID = Integer.parseInt(scanner.nextLine());
+                break;
+            } catch (NumberFormatException e){
+                System.out.println("ERROR: Computer ID must be an Integer.");
+            } catch (java.util.NoSuchElementException e) {
+                System.out.println("INFO: Exiting program.");
             }
+        }
 
+        try (Connection connection = connectToDatabase()) {
+            assert connection != null;
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+                preparedStatement.setInt(1, compID);
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        String compName = resultSet.getString("pcc.compName");
+                        String compOrganizationID = resultSet.getString("pcc.compOrganizationID");
+                        String orgName = resultSet.getString("org.orgName");
+
+                        computerData = new String[]{String.valueOf(compID), compName, compOrganizationID, orgName};
+                    } else {
+                        System.out.println("No Computer found with ID: " + compID);
+                    }
+                }
+            }
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
+        }
+
+        if (computerData != null) {
+            System.out.println("+-----------------+--------------------------------+------------------------------+");
+            System.out.printf("| %-15s | %-30s | %-28s |\n", "Computer ID", "Computer Name", "Organization Name");
+            System.out.println("+-----------------+--------------------------------+------------------------------+");
+            System.out.printf("| %-15d | %-30s | %-28s |\n",
+                    Integer.parseInt(computerData[0]), computerData[1], computerData[3]);
+            System.out.println("+-----------------+--------------------------------+------------------------------+");
+        } else {
+            System.out.println("-----------------------------------------------------------------------------------");
+            System.out.println("WARNING: No Computer is found.");
+            System.out.println("-----------------------------------------------------------------------------------");
         }
 
         return computerData;
     }
 
     public static String[] getOneComputer(int compID) {
-        Scanner scanner = new Scanner(System.in);
-        String query = "SELECT compID, compName, compOrganizationID FROM patching_calender_computers WHERE compID = " + compID;
+
+        String query = """
+                SELECT
+                    compID,
+                    compName,
+                    compOrganizationID
+                FROM
+                    patching_calender_computers
+                WHERE
+                    compID = ?
+                """;
+
         String[] computerData = null;
 
-        try (Connection connection = connectToDatabase();
-             Statement statement = connection != null ? connection.createStatement() : null;
-             ResultSet resultSet = statement != null ? statement.executeQuery(query) : null) {
+        try (Connection connection = connectToDatabase()) {
+            assert connection != null;
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            if (resultSet != null && resultSet.next()) {
-                String compName = resultSet.getString("compName");
-                int compOrganizationID = Integer.parseInt(resultSet.getString("compOrganizationID"));
+                preparedStatement.setInt(1, compID);
 
-                computerData = new String[] {String.valueOf(compID), compName, String.valueOf(compOrganizationID)};
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        String compName = resultSet.getString("compName");
+                        int compOrganizationID = resultSet.getInt("compOrganizationID");
 
-            } else {
-                System.out.println("No Computer found with ID: " + compID);
+                        computerData = new String[]{String.valueOf(compID), compName, String.valueOf(compOrganizationID)};
+                    } else {
+                        System.out.println("No Computer found with ID: " + compID);
+                    }
+                }
             }
-
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
-
         return computerData;
     }
 
     public static void addComputer() {
 
+        String query = """
+                INSERT
+                INTO
+                    patching_calender_computers
+                    (compName, compOrganizationID)
+                VALUES (?, ?)
+                """;
+
         Scanner scanner = new Scanner(System.in);
-        System.out.println("----------------------------------------------------------");
+        System.out.println("--------------------------------------------------------------------------");
         System.out.print("Enter the Computer name: ");
         String compName = scanner.nextLine();
-        System.out.print("Enter the Organization ID: ");
-        int compOrganizationID = Integer.parseInt(scanner.nextLine());
 
-        String query = "INSERT INTO patching_calender_computers (compName, compOrganizationID) VALUES (?, ?)";
+        List<Integer> compOrganizationIDsArray = Organization.getAllOrganizations();
+
+        int compOrganizationID;
+
+        while (true) {
+            System.out.print("Enter the Organization ID: ");
+            try {
+                compOrganizationID = Integer.parseInt(scanner.nextLine());
+                int finalCompOrganizationID = compOrganizationID;
+                if (compOrganizationIDsArray.stream().noneMatch(id -> id == finalCompOrganizationID)) {
+                    System.out.println("ERROR: Organization ID not found. Please enter an ID from the above table.");
+                    continue;
+                }
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("ERROR: Organization ID should be an Integer.");
+            } catch (java.util.NoSuchElementException e) {
+                System.out.println("INFO: Exiting program.");
+            }
+        }
+
         System.out.println("INFO: Adding organization - " + compName);
 
         try (Connection connection = connectToDatabase()) {
@@ -127,23 +219,46 @@ public class Computers {
     }
 
     public static void deleteComputer() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("----------------------------------------------------------");
-        System.out.print("Enter the Computer ID: ");
-        int compID = Integer.parseInt(scanner.nextLine());
 
-        String query = "DELETE FROM patching_calender_computers where compID=" + compID;
+        String query = """
+                DELETE
+                FROM
+                    patching_calender_computers
+                WHERE
+                    compID = ?
+                """;
+
+        Scanner scanner = new Scanner(System.in);
+        getAllComputers();
+
+        int compID;
+
+        while (true){
+            System.out.print("Enter the Computer ID: ");
+            try {
+                compID = Integer.parseInt(scanner.nextLine());
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("ERROR: Computer ID should be an Integer");
+            } catch (java.util.NoSuchElementException e) {
+                System.out.println("INFO: Exiting program.");
+            }
+        }
+
         System.out.println("INFO: Deleting Computer - " + compID);
 
         try (Connection connection = connectToDatabase()) {
             assert connection != null;
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+                preparedStatement.setInt(1, compID);
+
                 int rowsAffected = preparedStatement.executeUpdate();
 
                 if (rowsAffected > 0) {
-                    System.out.println("INFO: Organization deleted successfully.");
+                    System.out.println("INFO: Computer deleted successfully.");
                 } else {
-                    System.err.println("ERROR: Organization not deleted.");
+                    System.err.println("ERROR: No computer found with ID: " + compID);
                 }
             }
         } catch (SQLException e) {
@@ -152,18 +267,49 @@ public class Computers {
     }
 
     public static void updateComputer() {
+        String query = """
+                UPDATE
+                    patching_calender_computers
+                SET
+                    compName = ?,
+                    compOrganizationID = ?
+                WHERE
+                    compID = ?
+                """;
+
+        getAllComputers();
         Scanner scanner = new Scanner(System.in);
 
         String[] currentComputerData = getOneComputer();
+        if (currentComputerData==null){
+            System.out.println("WARNING: No Computer was found.");
+            return;
+        }
 
-        System.out.println("----------------------------------------------------------");
         System.out.println("Current Computer name: " + currentComputerData[1]);
         System.out.print("Enter the new Computer name (leave blank to keep current): ");
         String newCompName = scanner.nextLine().trim();
 
-        System.out.println("Current Organization ID: " + currentComputerData[2]);
-        System.out.print("Enter the new Organization ID (leave blank to keep current): ");
-        String compOrganizationID = scanner.nextLine().trim();
+        System.out.println("Current Organization Name: " + currentComputerData[3]);
+        List<Integer> compOrganizationIDsArray =  Organization.getAllOrganizations();
+        String compOrganizationID;
+        while (true){
+            System.out.print("Enter the new Organization ID (leave blank to keep current): ");
+            compOrganizationID = scanner.nextLine().trim();
+            try {
+                Integer.parseInt(compOrganizationID);
+                int finalCompOrganizationID = Integer.parseInt(compOrganizationID);
+                if (compOrganizationIDsArray.stream().noneMatch(id -> id == finalCompOrganizationID)) {
+                    System.out.println("ERROR: Organization ID not found. Please enter an ID from the above table.");
+                    continue;
+                }
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("ERROR: Organization ID should be an Integer.");
+            } catch (java.util.NoSuchElementException e) {
+                System.out.println("INFO: Exiting program.");
+            }
+        }
 
         if (newCompName.isEmpty()) {
             newCompName = currentComputerData[1];
@@ -172,7 +318,7 @@ public class Computers {
             compOrganizationID = currentComputerData[2];
         }
 
-        String query = "UPDATE patching_calender_computers SET compName = ?, compOrganizationID = ?  WHERE compID = ?";
+
         System.out.println("INFO: Updating Computer - ID: " + currentComputerData[0]);
 
         try (Connection connection = connectToDatabase()) {
@@ -196,28 +342,41 @@ public class Computers {
     }
 
     public static void getAllComputersByOrg(int compOrganizationID) {
-        String query = "SELECT compID, compName FROM patching_calender_computers where compOrganizationID=" + compOrganizationID;
+        String query = """
+                SELECT
+                    compID,
+                    compName
+                FROM
+                    patching_calender_computers
+                WHERE
+                    compOrganizationID = ?
+                """;
 
-        try (Connection connection = connectToDatabase();
-             Statement statement = connection != null ? connection.createStatement() : null;
-             ResultSet resultSet = statement != null ? statement.executeQuery(query) : null) {
+        try (Connection connection = connectToDatabase()) {
+            assert connection != null;
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            if (resultSet != null) {
+                preparedStatement.setInt(1, compOrganizationID);  // Set the parameter for the query
 
-                System.out.println("+-----------------+--------------------------------+");
-                System.out.println("| Computer ID     | Computer Name                  |");
-                System.out.println("+-----------------+--------------------------------+");
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
 
-                while (resultSet.next()) {
-                    int compID = resultSet.getInt("compID");
-                    String compName = resultSet.getString("compName");
+                    if (resultSet.next()) {
+                        System.out.println("+-----------------+--------------------------------+");
+                        System.out.println("| Computer ID     | Computer Name                  |");
+                        System.out.println("+-----------------+--------------------------------+");
 
-                    System.out.printf("| %-15d | %-30s |\n", compID, compName);
-                    System.out.println("+-----------------+--------------------------------+");
+                        do {
+                            int compID = resultSet.getInt("compID");
+                            String compName = resultSet.getString("compName");
+
+                            System.out.printf("| %-15d | %-30s |\n", compID, compName);
+                            System.out.println("+-----------------+--------------------------------+");
+                        } while (resultSet.next());  // Continue to the next row
+
+                    } else {
+                        System.out.println("No computers found for Organization ID: " + compOrganizationID);
+                    }
                 }
-
-            } else {
-                System.out.println("No computers found.");
             }
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());

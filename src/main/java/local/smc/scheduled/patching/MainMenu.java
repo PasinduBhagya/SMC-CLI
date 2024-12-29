@@ -1,6 +1,8 @@
 package local.smc.scheduled.patching;
 
-import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class MainMenu {
@@ -19,66 +21,18 @@ public class MainMenu {
                     continue;
 
                 case "help":
-                    System.out.println();
-                    System.out.println("INFO: Printing Help Menu");
-                    System.out.println("=============================================================================");
-                    System.out.printf(" %-25s %-50s%n", "COMMAND", "DESCRIPTION");
-                    System.out.println("=============================================================================");
-                    System.out.println("=============================================================================");
-                    System.out.printf(" %-25s %-50s%n", "help", "Displays the help menu.");
-                    System.out.println("=============================================================================\n\n");
-                    System.out.println("=============================================================================");
-                    System.out.printf(" %-25s %-50s%n", "show-organizations", "Lists all available organizations.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "show-organization", "Displays details of a specific organization.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "add-organization", "Adds a new organization.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "delete-organization", "Deletes an organization by ID.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "update-organization", "Updates the name of an organization by ID.");
-                    System.out.println("=============================================================================\n\n");
-                    System.out.println("=============================================================================");
-                    System.out.printf(" %-25s %-50s%n", "show-users", "Lists all users.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "show-user", "Displays details of a specific user.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "add-user", "Adds a new user.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "delete-user", "Deletes a user by ID.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "update-user", "Updates the details of a user by ID.");
-                    System.out.println("=============================================================================\n\n");
-                    System.out.println("=============================================================================");
-                    System.out.printf(" %-25s %-50s%n", "show-computers", "Lists all computers.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "show-computer", "Displays details of a specific computer.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "add-computer", "Adds a new computer.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "delete-computer", "Deletes a computer by ID.");
-                    System.out.println("-----------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "update-computer", "Updates the details of a computer by ID.");
-                    System.out.println("=============================================================================\n\n");
-                    System.out.println("=============================================================================");
-                    System.out.printf(" %-25s %-50s%n", "create-patching-ticket", "To create patching ticket for an organization");
-                    System.out.println("=============================================================================\n\n");
-                    System.out.println("=============================================================================================================================");
-                    System.out.printf(" %-25s %-50s%n", "create-task", "Create a patching task by adding a computers of an organization with their contact points");
-                    System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "get-tasks", "To get all tasks");
-                    System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "get-task", "To get information about one task");
-                    System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "delete-task", "To delete task");
-                    System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
-                    System.out.printf(" %-25s %-50s%n", "update-task", "To update task");
-                    System.out.println("=============================================================================================================================\n\n");
-                    System.out.println("=============================================================================");
-                    System.out.printf(" %-25s %-50s%n", "quit", "Exits the program.");
-                    System.out.println("=============================================================================");
-
-                    System.out.println();
+                    System.out.println("INFO: Printing the helper Menu.\n");
+                    String helpFilePath = "config/help-content/patching-calender-help.txt";
+                    String helpLine;
+                    try (BufferedReader helpFileContent = new BufferedReader(new FileReader(helpFilePath))){
+                        while ((helpLine = helpFileContent.readLine()) != null){
+                            String optionValue = helpLine.split(",")[0];
+                            String optionDescription = helpLine.split(",")[1];
+                            System.out.printf(" %-30s %-50s\n", optionValue, optionDescription);
+                        }
+                    } catch (IOException e){
+                        System.out.println("Error: Unable to open the help.txt file.");
+                    }
                     break;
 
                 case "show-organizations":
@@ -97,6 +51,7 @@ public class MainMenu {
                     System.out.println("+-----------------+--------------------------------------+");
                     System.out.printf("| %-15d | %-36s |\n", Integer.parseInt(organizationData[0]), organizationData[1]);
                     System.out.println("+-----------------+--------------------------------------+");
+
                     break;
 
                 case "delete-organization":
@@ -140,12 +95,7 @@ public class MainMenu {
                     break;
 
                 case "show-computer":
-                    String[] computerData = Computers.getOneComputer();;
-                    System.out.println("+-----------------+--------------------------------+---------------------+");
-                    System.out.println("| Computer ID     | Computer Name                  | Organization ID     |");
-                    System.out.println("+-----------------+--------------------------------+---------------------+");
-                    System.out.printf("| %-15d | %-30s | %-19d |\n", Integer.parseInt(computerData[0]), computerData[1], Integer.parseInt(computerData[2]));
-                    System.out.println("+-----------------+--------------------------------+---------------------+");
+                    Computers.getOneComputer();
                     break;
 
                 case "add-computer":

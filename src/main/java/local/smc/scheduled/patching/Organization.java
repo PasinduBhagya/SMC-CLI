@@ -1,15 +1,20 @@
 package local.smc.scheduled.patching;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import static local.smc.common.Database.connectToDatabase;
 
 public class Organization {
 
-    public static void getAllOrganizations() {
+    public static List<Integer> getAllOrganizations() {
         String query = "SELECT orgID, orgName FROM patching_calender_organizations";
 
+        List<Integer> organizationIDs = new ArrayList<>();
+
+        // List<Integer> compOrganizationIDsList = new ArrayList<>();
         try (Connection connection = connectToDatabase();
              Statement statement = connection != null ? connection.createStatement() : null;
              ResultSet resultSet = statement != null ? statement.executeQuery(query) : null) {
@@ -21,6 +26,7 @@ public class Organization {
 
                 while (resultSet.next()) {
                     int orgID = resultSet.getInt("orgID");
+                    organizationIDs.add(orgID);
                     String orgName = resultSet.getString("orgName");
 
                     System.out.printf("| %-15d | %-36s |\n", orgID, orgName);
@@ -33,6 +39,7 @@ public class Organization {
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
+        return organizationIDs;
     }
 
     public static String[] getOneOrganization() {
