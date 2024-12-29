@@ -171,14 +171,22 @@ public class Computers {
                 VALUES (?, ?)
                 """;
 
+        int compOrganizationID;
+
         Scanner scanner = new Scanner(System.in);
         System.out.println("--------------------------------------------------------------------------");
-        System.out.print("Enter the Computer name: ");
-        String compName = scanner.nextLine();
+        String compName;
+        while (true){
+            System.out.print("Enter the Computer name: ");
+            compName = scanner.nextLine();
+            if (compName.isEmpty()){
+                System.out.println("ERROR: Computer name cannot be empty");
+            }else {
+                break;
+            }
+        }
 
         List<Integer> compOrganizationIDsArray = Organization.getAllOrganizations();
-
-        int compOrganizationID;
 
         while (true) {
             System.out.print("Enter the Organization ID: ");

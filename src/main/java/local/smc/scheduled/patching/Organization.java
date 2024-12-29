@@ -10,11 +10,16 @@ import static local.smc.common.Database.connectToDatabase;
 public class Organization {
 
     public static List<Integer> getAllOrganizations() {
-        String query = "SELECT orgID, orgName FROM patching_calender_organizations";
+        String query = """
+                SELECT
+                    orgID,
+                    orgName
+                FROM
+                    patching_calender_organizations
+                """;
 
         List<Integer> organizationIDs = new ArrayList<>();
 
-        // List<Integer> compOrganizationIDsList = new ArrayList<>();
         try (Connection connection = connectToDatabase();
              Statement statement = connection != null ? connection.createStatement() : null;
              ResultSet resultSet = statement != null ? statement.executeQuery(query) : null) {
@@ -46,26 +51,54 @@ public class Organization {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("----------------------------------------------------------");
-        System.out.print("Enter the organization ID: ");
+        int orgID;
 
-        int orgID = Integer.parseInt(scanner.nextLine());
-        String query = "SELECT orgID, orgName FROM patching_calender_organizations WHERE orgID = " + orgID;
+        while (true) {
+            System.out.print("Enter the organization ID: ");
+            try {
+                orgID = Integer.parseInt(scanner.nextLine());
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("ERROR: Organization ID must be an Integer.");
+            } catch (java.util.NoSuchElementException e) {
+                System.out.println("INFO: Exiting program.");
+                return null;
+            }
+        }
+
+        String query = "SELECT orgID, orgName FROM patching_calender_organizations WHERE orgID = ?";
         String[] organizationData = null;
 
-        try (Connection connection = connectToDatabase();
-             Statement statement = connection != null ? connection.createStatement() : null;
-             ResultSet resultSet = statement != null ? statement.executeQuery(query) : null) {
+        try (Connection connection = connectToDatabase()) {
+            assert connection != null;
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            if (resultSet != null && resultSet.next()) {
-                String orgName = resultSet.getString("orgName");
+                preparedStatement.setInt(1, orgID);
 
-                organizationData = new String[] {String.valueOf(orgID), orgName};
-            } else {
-                System.out.println("No organization found with ID: " + orgID);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        String orgName = resultSet.getString("orgName");
+                        organizationData = new String[] {String.valueOf(orgID), orgName};
+                    } else {
+                        System.out.println("No organization found with ID: " + orgID);
+                    }
+                }
+
             }
-
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
+        }
+
+        if (organizationData != null) {
+            System.out.println("+-----------------+--------------------------------------+");
+            System.out.println("| Organization ID | Organization Name                    |");
+            System.out.println("+-----------------+--------------------------------------+");
+            System.out.printf("| %-15d | %-36s |\n", Integer.parseInt(organizationData[0]), organizationData[1]);
+            System.out.println("+-----------------+--------------------------------------+");
+        } else {
+            System.out.println("-----------------------------------------------------------------------------------");
+            System.out.println("WARNING: No Organization is found.");
+            System.out.println("-----------------------------------------------------------------------------------");
         }
 
         return organizationData;
@@ -74,10 +107,18 @@ public class Organization {
 
     public static void addOrganization() {
 
-        Scanner scanner1 = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
         System.out.println("----------------------------------------------------------");
-        System.out.print("Enter the organization name: ");
-        String orgName = scanner1.nextLine();
+        String orgName;
+        while (true){
+            System.out.print("Enter the organization name: ");
+            orgName = scanner.nextLine();
+            if (orgName.isEmpty()){
+                System.out.println("ERROR: Organization name cannot be empty");
+            }else {
+                break;
+            }
+        }
 
         String query = "INSERT INTO patching_calender_organizations (orgName) VALUES (?)";
         System.out.println("INFO: Adding organization - " + orgName);
@@ -101,23 +142,38 @@ public class Organization {
     }
 
     public static void deleteOrganization() {
-        Scanner scanner3 = new Scanner(System.in);
-        System.out.println("----------------------------------------------------------");
-        System.out.print("Enter the organization ID: ");
-        int orgID = Integer.parseInt(scanner3.nextLine());
+        getAllOrganizations();
+        Scanner scanner = new Scanner(System.in);
 
-        String query = "DELETE FROM patching_calender_organizations where orgID=" + orgID;
-        System.out.println("INFO: Deleting organization - " + orgID);
+        int orgID;
+        while (true){
+            System.out.print("Enter the organization ID: ");
+            try {
+                orgID = Integer.parseInt(scanner.nextLine());
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("ERROR: Computer ID should be an Integer");
+            } catch (java.util.NoSuchElementException e) {
+                System.out.println("INFO: Exiting program.");
+            }
+        }
+
+        String query = "DELETE FROM patching_calender_organizations WHERE orgID = ?";
+
+        System.out.println("INFO: Deleting organization with ID - " + orgID);
 
         try (Connection connection = connectToDatabase()) {
             assert connection != null;
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+                preparedStatement.setInt(1, orgID);
+
                 int rowsAffected = preparedStatement.executeUpdate();
 
                 if (rowsAffected > 0) {
                     System.out.println("INFO: Organization deleted successfully.");
                 } else {
-                    System.err.println("ERROR: Organization not deleted.");
+                    System.err.println("ERROR: No organization found with the specified ID.");
                 }
             }
         } catch (SQLException e) {
@@ -126,9 +182,15 @@ public class Organization {
     }
 
     public static void updateOrganization() {
+        getAllOrganizations();
         Scanner scanner = new Scanner(System.in);
 
         String[] currentOrgData = getOneOrganization();
+
+        if (currentOrgData==null){
+            System.out.println("WARNING: No Organization was found.");
+            return;
+        }
 
         System.out.println("----------------------------------------------------------");
         System.out.println("Current organization name: " + currentOrgData[1]);
@@ -160,5 +222,4 @@ public class Organization {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
     }
-
 }

@@ -15,7 +15,7 @@ public class MainMenu {
 
         while (true){
             System.out.print("patching-calender> ");
-            String command = commandInput.nextLine();
+            String command = commandInput.nextLine().trim();
             switch (command){
                 case "":
                     continue;
@@ -44,14 +44,7 @@ public class MainMenu {
                     break;
 
                 case "show-organization":
-                    String[] organizationData = Organization.getOneOrganization();
-
-                    System.out.println("+-----------------+--------------------------------------+");
-                    System.out.println("| Organization ID | Organization Name                    |");
-                    System.out.println("+-----------------+--------------------------------------+");
-                    System.out.printf("| %-15d | %-36s |\n", Integer.parseInt(organizationData[0]), organizationData[1]);
-                    System.out.println("+-----------------+--------------------------------------+");
-
+                    Organization.getOneOrganization();
                     break;
 
                 case "delete-organization":
