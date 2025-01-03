@@ -112,30 +112,10 @@ public class MainMenu {
                     break;
 
                 case "get-task":
-                    String[] taskData = Tasks.getOneTask();
-
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Field", "Value");
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Task ID", taskData[0]);
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Task Name", taskData[1]);
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Organization Name", taskData[2]);
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Primary Contact", taskData[4]);
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Secondary Contacts", taskData[5]);
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Computer Names", taskData[6]);
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Created Date", taskData[7]);
-                    System.out.println("+----------------------+---------------------------------------------------------+");
-                    System.out.printf("| %-20s | %-55s |%n", "Updated Date", taskData[8]);
-                    System.out.println("+----------------------+---------------------------------------------------------+");
+                    Tasks.getOneTask();
                     break;
 
-                    case "delete-task":
+                case "delete-task":
                     Tasks.deleteTask();
                     break;
 

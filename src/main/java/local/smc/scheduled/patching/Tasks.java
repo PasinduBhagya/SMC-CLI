@@ -6,30 +6,29 @@ import java.util.List;
 import java.util.Scanner;
 
 import static local.smc.common.Database.connectToDatabase;
+import static local.smc.common.verifications.*;
 
 public class Tasks {
     public static void addTask(){
-        Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Enter task name: ");
-        String taskName = scanner.nextLine();
+        String inputMessage1 = "Enter the Task name: ";
+        String taskName = checkForEmptyString(inputMessage1);
+        List<Integer> compOrganizationIDsArray = Organization.getAllOrganizations();
 
-        Organization.getAllOrganizations();
-        System.out.print("Enter the Organization ID: ");
-        int organizationID = scanner.nextInt();
-        scanner.nextLine();
+        String inputMessage2 = "Enter the Organization ID: ";
+        int organizationID = checkForAllowedValues(inputMessage2, compOrganizationIDsArray);
 
-        Users.getAllUsersByOrg(organizationID);
-        System.out.print("Enter the primary contact user ID: ");
-        int primaryContactID = scanner.nextInt();
-        scanner.nextLine();
+        List<Integer> orgUsersIDs = Users.getAllUsersByOrg(organizationID);
+        String inputMessage3 = "Enter the primary contact user ID: ";
+        int primaryContactID = checkForAllowedValues(inputMessage3, orgUsersIDs);
 
-        System.out.print("Enter the other contact user IDs [Add multiple users separated by commas]: ");
-        String otherContactIDs = scanner.nextLine();
+        String inputMessage4 = "Enter the other contact user IDs [Add multiple users separated by commas]: ";
+        String otherContactIDs = checkForFormating(inputMessage4, orgUsersIDs);
 
-        Computers.getAllComputersByOrg(organizationID);
-        System.out.print("Enter the Computer IDs [Add multiple computers separated by commas]: ");
-        String computerIDs = scanner.nextLine();
+        List<Integer> orgComputerIDs = Computers.getAllComputersByOrg(organizationID);
+        String inputMessage5 = "Enter the Computer IDs [Add multiple computers separated by commas]: ";
+        String computerIDs = checkForFormating(inputMessage5, orgComputerIDs);
+
 
         String query = "INSERT INTO patching_calender_tasks (taskName, organizationID, primaryContactID, otherContactIDs, computerIDs) VALUES (?, ?, ?, ?, ?)";
         System.out.println("INFO: Adding task - " + taskName);
@@ -54,11 +53,16 @@ public class Tasks {
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
-
     }
 
     public static void getAllTasks() {
-        String query = "SELECT taskID, taskName FROM patching_calender_tasks";
+        String query = """
+                SELECT
+                    taskID,
+                    taskName
+                FROM
+                    patching_calender_tasks
+                """;
 
         try (Connection connection = connectToDatabase();
              Statement statement = connection != null ? connection.createStatement() : null;
@@ -75,8 +79,6 @@ public class Tasks {
                     System.out.printf("| %-10d | %-44s |\n", taskID, taskName);
                     System.out.println("+------------+----------------------------------------------+");
                 }
-
-
             } else {
                 System.out.println("No tasks found.");
             }
@@ -87,17 +89,16 @@ public class Tasks {
 
     public static String[] getOneTask() {
 
-        Scanner scanner = new Scanner(System.in);
         System.out.println("----------------------------------------------------------------------------------");
-        System.out.print("Enter the Task ID: ");
-        int taskID = scanner.nextInt();
-        scanner.nextLine();
+        String inputMessage = "Enter the Task ID: ";
+        int taskID = checkForIntegers(inputMessage);
 
         String query = """
         SELECT
             tasks.taskName,
             organization.orgName,
             tasks.organizationID,
+            tasks.primaryContactID,
             users.FirstName AS primaryContactFirstName,
             users.LastName AS primaryContactLastName,
             tasks.otherContactIDs,
@@ -115,88 +116,114 @@ public class Tasks {
         ON
             tasks.primaryContactID = users.userID
         WHERE
-            tasks.taskID =""" + taskID;
+            tasks.taskID = ?""";
 
         String[] taskData = null;
 
-        try (Connection connection = connectToDatabase();
-             Statement statement = connection != null ? connection.createStatement() : null;
-             ResultSet resultSet = statement != null ? statement.executeQuery(query) : null) {
+        try (Connection connection = connectToDatabase()) {
+            assert connection != null;
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            if (resultSet != null && resultSet.next()) {
-                String taskName = resultSet.getString("tasks.taskName");
-                String orgName = resultSet.getString("organization.orgName");
-                String orgID = resultSet.getString("tasks.organizationID");
-                String primaryContactFirstName = resultSet.getString("primaryContactFirstName");
-                String primaryContactLastName = resultSet.getString("primaryContactLastName");
-                String otherContactIDs = resultSet.getString("tasks.otherContactIDs");
-                String computerIDs = resultSet.getString("tasks.computerIDs");
-                java.sql.Timestamp createdAt = resultSet.getTimestamp("createdAt");
-                java.sql.Timestamp updatedAt = resultSet.getTimestamp("updatedAt");
+                preparedStatement.setInt(1, taskID);
 
-                List<String> userDataList = new ArrayList<>();
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        String taskName = resultSet.getString("taskName");
+                        String orgName = resultSet.getString("orgName");
+                        String orgID = resultSet.getString("organizationID");
+                        String primaryContactID = resultSet.getString("primaryContactID");
+                        String primaryContactFirstName = resultSet.getString("primaryContactFirstName");
+                        String primaryContactLastName = resultSet.getString("primaryContactLastName");
+                        String otherContactIDs = resultSet.getString("otherContactIDs");
+                        String computerIDs = resultSet.getString("computerIDs");
+                        Timestamp createdAt = resultSet.getTimestamp("createdAt");
+                        Timestamp updatedAt = resultSet.getTimestamp("updatedAt");
 
-                if (otherContactIDs != null) {
-                    String[] otherContactIDsArray = otherContactIDs.split(",");
-
-                    for (String userID : otherContactIDsArray) {
-                        String[] userData = Users.getOneUser(userID.trim());
-                        if (userData != null && userData.length >= 3) {
-                            String userFullName = userData[1] + " " + userData[2];
-                            userDataList.add(userFullName);
+                        List<String> userDataList = new ArrayList<>();
+                        if (otherContactIDs != null) {
+                            for (String userID : otherContactIDs.split(",")) {
+                                String[] userData = Users.getOneUser(userID.trim());
+                                if (userData != null && userData.length >= 3) {
+                                    userDataList.add(userData[1] + " " + userData[2]);
+                                }
+                            }
                         }
+
+                        List<String> computerDataList = new ArrayList<>();
+                        if (computerIDs != null) {
+                            for (String compID : computerIDs.split(",")) {
+                                String[] computerData = Computers.getOneComputer(Integer.parseInt(compID.trim()));
+                                if (computerData != null && computerData.length > 2) {
+                                    computerDataList.add(computerData[1]);
+                                }
+                            }
+                        }
+
+                        String createdAtStr = createdAt != null ? createdAt.toString() : "N/A";
+                        String updatedAtStr = updatedAt != null ? updatedAt.toString() : "N/A";
+
+                        taskData = new String[]{
+                                String.valueOf(taskID),
+                                taskName,
+                                orgName,
+                                orgID,
+                                primaryContactID,
+                                primaryContactFirstName + " " + primaryContactLastName,
+                                String.join(", ", userDataList),
+                                otherContactIDs,
+                                computerIDs,
+                                String.join(", ", computerDataList),
+                                createdAtStr,
+                                updatedAtStr
+                        };
+                    } else {
+                        System.out.println("No Task found with ID: " + taskID);
                     }
                 }
-
-                List<String> computerDataList = new ArrayList<>();
-
-                if (computerIDs != null) {
-                    String[] computerIDsArray = computerIDs.split(",");
-                    for (String compID : computerIDsArray){
-                        String[] computerData = Computers.getOneComputer(Integer.parseInt(compID));
-                        if (computerData != null && computerData.length > 2){
-                            String computerName = computerData[1];
-                            computerDataList.add(computerName);
-                        }
-                    }
-                }
-
-                String createdAtStr = createdAt != null ? createdAt.toString() : "N/A";
-                String updatedAtStr = updatedAt != null ? updatedAt.toString() : "N/A";
-
-                taskData = new String[]{
-                        String.valueOf(taskID),
-                        taskName,
-                        orgName,
-                        orgID,
-                        primaryContactFirstName + " " + primaryContactLastName,
-                        String.join(", ", userDataList),
-                        String.join(", ", computerDataList),
-                        createdAtStr,
-                        updatedAtStr
-                };
-            } else {
-                System.out.println("No Task found with ID: " + taskID);
             }
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
-
+        if (taskData != null){
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Field", "Value");
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Task ID", taskData[0]);
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Task Name", taskData[1]);
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Organization Name", taskData[2]);
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Primary Contact", taskData[5]);
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Secondary Contacts", taskData[6]);
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Computer Names", taskData[9]);
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Created Date", taskData[10]);
+            System.out.println("+----------------------+---------------------------------------------------------+");
+            System.out.printf("| %-20s | %-55s |%n", "Updated Date", taskData[11]);
+            System.out.println("+----------------------+---------------------------------------------------------+");
+        }else {
+            System.out.println("-----------------------------------------------------------------------------------");
+            System.out.println("WARNING: No Task is found.");
+            System.out.println("-----------------------------------------------------------------------------------");
+        }
         return taskData;
     }
 
     public static void deleteTask() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("----------------------------------------------------------");
-        System.out.print("Enter the Task ID: ");
-        int taskID = Integer.parseInt(scanner.nextLine());
+        getAllTasks();
+        String inputMessage = "Enter the Task ID: ";
+        int taskID = checkForIntegers(inputMessage);
 
-        String query = "DELETE FROM patching_calender_tasks where taskID=" + taskID;
+        String query = "DELETE FROM patching_calender_tasks where taskID=?";
         System.out.println("INFO: Deleting Computer - " + taskID);
 
         try (Connection connection = connectToDatabase()) {
             assert connection != null;
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, taskID);
                 int rowsAffected = preparedStatement.executeUpdate();
 
                 if (rowsAffected > 0) {
@@ -213,52 +240,78 @@ public class Tasks {
     public static void updateTask(){
         Scanner scanner = new Scanner(System.in);
 
+
+        getAllTasks();
         String[] currentTaskData = getOneTask();
+
+        int primaryContactID = Integer.parseInt(currentTaskData[4]);
+        String otherContactIDs = currentTaskData[7];
+        String computerIDs = currentTaskData[8];
 
         System.out.println("----------------------------------------------------------");
         System.out.println("Current Task name: " + currentTaskData[1]);
         System.out.print("Enter the new task name (leave blank to keep current): ");
         String newTaskName = scanner.nextLine().trim();
 
-        System.out.println("Current Organization ID: " + currentTaskData[3]);
-        Organization.getAllOrganizations();
-        System.out.print("Enter the new Organization name (leave blank to keep current): ");
-        String organizationID = scanner.nextLine().trim();
-
-        if (organizationID.isEmpty()) {
-            organizationID = currentTaskData[3];
-        }
-
-        System.out.println("Current Primary Contact: " + currentTaskData[3]);
-        Users.getAllUsersByOrg(Integer.parseInt(organizationID));
-        System.out.print("Enter the new Primary Contact ID name (leave blank to keep current): ");
-        String primaryContactID = scanner.nextLine().trim();
-
-        System.out.println("Current Other Contacts: " + currentTaskData[3]);
-        System.out.print("Enter Other Contacts: (leave blank to keep current): ");
-        String otherContactIDs = scanner.nextLine().trim();
-
-        System.out.println("Current computer IDs: " + currentTaskData[3]);
-        Computers.getAllComputersByOrg(Integer.parseInt(organizationID));
-        System.out.print("Enter the new Computer IDs (leave blank to keep current): ");
-        String computerIDs = scanner.nextLine().trim();
-
-
         if (newTaskName.isEmpty()) {
             newTaskName = currentTaskData[1];
         }
 
-        String query = "UPDATE patching_calender_tasks SET taskName = ?, organizationID = ?, primaryContactID = ?, otherContactIDs = ?, computerIDs = ? WHERE taskID = ?";
-        System.out.println("INFO: Updating Task - ID: " + currentTaskData[0]);
+        System.out.println("Current Organization Name: " + currentTaskData[2]);
 
+        List<Integer> orgIDs = Organization.getAllOrganizations();
+
+        String inputMessage = "Enter the new Organization name (leave blank to keep current): ";
+        int organizationID = (checkForUpdatedAllowedValues(inputMessage, orgIDs));
+
+        if (organizationID == -1){
+            List<Integer> orgUsersIDs = Users.getAllUsersByOrg(Integer.parseInt(currentTaskData[3]));
+            organizationID = Integer.parseInt(currentTaskData[3]);
+            System.out.println("Current Primary Contact: " + currentTaskData[5]);
+            String inputMessage3 = "Enter the new Primary Contact ID name (leave blank to keep current): ";
+            primaryContactID = checkForUpdatedAllowedValues(inputMessage3, orgUsersIDs);
+            if (primaryContactID == -1){
+                primaryContactID = Integer.parseInt(currentTaskData[4]);
+            }
+
+            System.out.println("Current Other Contacts: " + currentTaskData[6]);
+            String inputMessage1 = "Enter Other Contacts: (leave blank to keep current): ";
+            otherContactIDs = checkForFormating(inputMessage1, orgUsersIDs, currentTaskData[7]);
+            if (otherContactIDs == null || otherContactIDs.isEmpty()) {
+                otherContactIDs = currentTaskData[7];
+            }
+
+            System.out.println("Current computer IDs: " + currentTaskData[7]);
+            List<Integer> orgComputerIDs = Computers.getAllComputersByOrg(organizationID);
+            String inputMessage2 = "Enter the Computer IDs [Add multiple computers separated by commas]: ";
+            computerIDs = checkForFormating(inputMessage2, orgComputerIDs, currentTaskData[8]);
+
+        }else{
+            if (organizationID != Integer.parseInt(currentTaskData[3])){
+                System.out.println("INFO: Since the organization has been changed, please update the Below Information\n");
+                List<Integer> orgUsersIDs = Users.getAllUsersByOrg(organizationID);
+                String inputMessage3 = "Enter the primary contact user ID: ";
+                primaryContactID = checkForAllowedValues(inputMessage3, orgUsersIDs);
+
+                String inputMessage4 = "Enter the other contact user IDs [Add multiple users separated by commas]: ";
+                otherContactIDs = checkForFormating(inputMessage4, orgUsersIDs);
+
+                List<Integer> orgComputerIDs = Computers.getAllComputersByOrg(organizationID);
+                String inputMessage5 = "Enter the Computer IDs [Add multiple computers separated by commas]: ";
+                computerIDs = checkForFormating(inputMessage5, orgComputerIDs);
+            }
+        }
+
+        String query = "UPDATE patching_calender_tasks SET taskName = ?, organizationID = ?, primaryContactID = ?, otherContactIDs = ?, computerIDs = ? WHERE taskID = ?";
         try (Connection connection = connectToDatabase()) {
             assert connection != null;
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, newTaskName);
-                preparedStatement.setInt(2, Integer.parseInt(organizationID));
-                preparedStatement.setInt(3, Integer.parseInt(primaryContactID));
+                preparedStatement.setInt(2, Integer.parseInt(String.valueOf(organizationID)));
+                preparedStatement.setInt(3, primaryContactID);
                 preparedStatement.setString(4, otherContactIDs);
                 preparedStatement.setString(5, computerIDs);
+                preparedStatement.setString(6, currentTaskData[0]);
 
                 int rowsAffected = preparedStatement.executeUpdate();
 

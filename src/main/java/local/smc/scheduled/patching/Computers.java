@@ -1,10 +1,14 @@
 package local.smc.scheduled.patching;
 
+import com.sun.jdi.Value;
+
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import static local.smc.common.Database.connectToDatabase;
+import static local.smc.common.verifications.*;
 
 public class Computers {
     public static void getAllComputers() {
@@ -28,7 +32,6 @@ public class Computers {
              ResultSet resultSet = statement != null ? statement.executeQuery(query) : null) {
 
             if (resultSet != null) {
-
                 System.out.println("+-----------------+--------------------------------+-----------------------------+");
                 System.out.printf("| %-15s | %-30s | %-27s |\n", "Computer ID", "Computer Name", "Organization Name");
                 System.out.println("+-----------------+--------------------------------+-----------------------------+");
@@ -47,7 +50,6 @@ public class Computers {
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
-
     }
 
     public static String[] getOneComputer() {
@@ -67,23 +69,13 @@ public class Computers {
                 WHERE
                     pcc.compID = ?""";
 
-        Scanner scanner = new Scanner(System.in);
         int compID;
         String[] computerData = null;
 
         System.out.println("--------------------------------------------------------------------------");
 
-        while (true){
-            try {
-                System.out.print("Enter the Computer ID: ");
-                compID = Integer.parseInt(scanner.nextLine());
-                break;
-            } catch (NumberFormatException e){
-                System.out.println("ERROR: Computer ID must be an Integer.");
-            } catch (java.util.NoSuchElementException e) {
-                System.out.println("INFO: Exiting program.");
-            }
-        }
+        String inputMessage = "Enter the Computer ID: ";
+        compID = checkForIntegers(inputMessage);
 
         try (Connection connection = connectToDatabase()) {
             assert connection != null;
@@ -173,37 +165,15 @@ public class Computers {
 
         int compOrganizationID;
 
-        Scanner scanner = new Scanner(System.in);
         System.out.println("--------------------------------------------------------------------------");
         String compName;
-        while (true){
-            System.out.print("Enter the Computer name: ");
-            compName = scanner.nextLine();
-            if (compName.isEmpty()){
-                System.out.println("ERROR: Computer name cannot be empty");
-            }else {
-                break;
-            }
-        }
+        String inputMessage1 = "Enter the Computer name: ";
+        compName = checkForEmptyString(inputMessage1);
 
         List<Integer> compOrganizationIDsArray = Organization.getAllOrganizations();
 
-        while (true) {
-            System.out.print("Enter the Organization ID: ");
-            try {
-                compOrganizationID = Integer.parseInt(scanner.nextLine());
-                int finalCompOrganizationID = compOrganizationID;
-                if (compOrganizationIDsArray.stream().noneMatch(id -> id == finalCompOrganizationID)) {
-                    System.out.println("ERROR: Organization ID not found. Please enter an ID from the above table.");
-                    continue;
-                }
-                break;
-            } catch (NumberFormatException e) {
-                System.out.println("ERROR: Organization ID should be an Integer.");
-            } catch (java.util.NoSuchElementException e) {
-                System.out.println("INFO: Exiting program.");
-            }
-        }
+        String inputMessage2 = "Enter the Organization ID: ";
+        compOrganizationID = checkForAllowedValues(inputMessage2, compOrganizationIDsArray);
 
         System.out.println("INFO: Adding organization - " + compName);
 
@@ -236,22 +206,13 @@ public class Computers {
                     compID = ?
                 """;
 
-        Scanner scanner = new Scanner(System.in);
         getAllComputers();
 
         int compID;
 
-        while (true){
-            System.out.print("Enter the Computer ID: ");
-            try {
-                compID = Integer.parseInt(scanner.nextLine());
-                break;
-            } catch (NumberFormatException e) {
-                System.out.println("ERROR: Computer ID should be an Integer");
-            } catch (java.util.NoSuchElementException e) {
-                System.out.println("INFO: Exiting program.");
-            }
-        }
+        String inputMessage = "Enter the Computer ID: ";
+
+        compID = checkForIntegers(inputMessage);
 
         System.out.println("INFO: Deleting Computer - " + compID);
 
@@ -300,30 +261,16 @@ public class Computers {
 
         System.out.println("Current Organization Name: " + currentComputerData[3]);
         List<Integer> compOrganizationIDsArray =  Organization.getAllOrganizations();
-        String compOrganizationID;
-        while (true){
-            System.out.print("Enter the new Organization ID (leave blank to keep current): ");
-            compOrganizationID = scanner.nextLine().trim();
-            try {
-                Integer.parseInt(compOrganizationID);
-                int finalCompOrganizationID = Integer.parseInt(compOrganizationID);
-                if (compOrganizationIDsArray.stream().noneMatch(id -> id == finalCompOrganizationID)) {
-                    System.out.println("ERROR: Organization ID not found. Please enter an ID from the above table.");
-                    continue;
-                }
-                break;
-            } catch (NumberFormatException e) {
-                System.out.println("ERROR: Organization ID should be an Integer.");
-            } catch (java.util.NoSuchElementException e) {
-                System.out.println("INFO: Exiting program.");
-            }
-        }
+        int compOrganizationID;
+
+        String inputMessage = "Enter the new Organization ID (leave blank to keep current): ";
+        compOrganizationID = checkForUpdatedAllowedValues(inputMessage, compOrganizationIDsArray);
 
         if (newCompName.isEmpty()) {
             newCompName = currentComputerData[1];
         }
-        if (compOrganizationID.isEmpty()) {
-            compOrganizationID = currentComputerData[2];
+        if (compOrganizationID == -1) {
+            compOrganizationID = Integer.parseInt(currentComputerData[2]);
         }
 
 
@@ -333,7 +280,7 @@ public class Computers {
             assert connection != null;
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, newCompName);
-                preparedStatement.setInt(2, Integer.parseInt(compOrganizationID));
+                preparedStatement.setInt(2, compOrganizationID);
                 preparedStatement.setInt(3, Integer.parseInt(currentComputerData[0]));
 
                 int rowsAffected = preparedStatement.executeUpdate();
@@ -349,7 +296,7 @@ public class Computers {
         }
     }
 
-    public static void getAllComputersByOrg(int compOrganizationID) {
+    public static List<Integer> getAllComputersByOrg(int compOrganizationID) {
         String query = """
                 SELECT
                     compID,
@@ -359,6 +306,8 @@ public class Computers {
                 WHERE
                     compOrganizationID = ?
                 """;
+
+        List<Integer> organizationComputerIDs = new ArrayList<>();
 
         try (Connection connection = connectToDatabase()) {
             assert connection != null;
@@ -375,6 +324,7 @@ public class Computers {
 
                         do {
                             int compID = resultSet.getInt("compID");
+                            organizationComputerIDs.add(compID);
                             String compName = resultSet.getString("compName");
 
                             System.out.printf("| %-15d | %-30s |\n", compID, compName);
@@ -389,5 +339,6 @@ public class Computers {
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
+        return organizationComputerIDs;
     }
 }

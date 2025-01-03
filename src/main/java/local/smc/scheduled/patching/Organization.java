@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Scanner;
 
 import static local.smc.common.Database.connectToDatabase;
+import static local.smc.common.verifications.checkForEmptyString;
+import static local.smc.common.verifications.checkForIntegers;
 
 public class Organization {
 
@@ -48,23 +50,12 @@ public class Organization {
     }
 
     public static String[] getOneOrganization() {
-        Scanner scanner = new Scanner(System.in);
 
         System.out.println("----------------------------------------------------------");
         int orgID;
 
-        while (true) {
-            System.out.print("Enter the organization ID: ");
-            try {
-                orgID = Integer.parseInt(scanner.nextLine());
-                break;
-            } catch (NumberFormatException e) {
-                System.out.println("ERROR: Organization ID must be an Integer.");
-            } catch (java.util.NoSuchElementException e) {
-                System.out.println("INFO: Exiting program.");
-                return null;
-            }
-        }
+        String inputMessage = "Enter the Computer ID: ";
+        orgID = checkForIntegers(inputMessage);
 
         String query = "SELECT orgID, orgName FROM patching_calender_organizations WHERE orgID = ?";
         String[] organizationData = null;
@@ -107,18 +98,9 @@ public class Organization {
 
     public static void addOrganization() {
 
-        Scanner scanner = new Scanner(System.in);
         System.out.println("----------------------------------------------------------");
-        String orgName;
-        while (true){
-            System.out.print("Enter the organization name: ");
-            orgName = scanner.nextLine();
-            if (orgName.isEmpty()){
-                System.out.println("ERROR: Organization name cannot be empty");
-            }else {
-                break;
-            }
-        }
+        String inputMessage = "Enter the Organization name: ";
+        String orgName = checkForEmptyString(inputMessage);
 
         String query = "INSERT INTO patching_calender_organizations (orgName) VALUES (?)";
         System.out.println("INFO: Adding organization - " + orgName);
@@ -143,20 +125,8 @@ public class Organization {
 
     public static void deleteOrganization() {
         getAllOrganizations();
-        Scanner scanner = new Scanner(System.in);
-
-        int orgID;
-        while (true){
-            System.out.print("Enter the organization ID: ");
-            try {
-                orgID = Integer.parseInt(scanner.nextLine());
-                break;
-            } catch (NumberFormatException e) {
-                System.out.println("ERROR: Computer ID should be an Integer");
-            } catch (java.util.NoSuchElementException e) {
-                System.out.println("INFO: Exiting program.");
-            }
-        }
+        String inputMessage = "Enter the Organization ID: ";
+        int orgID = checkForIntegers(inputMessage);
 
         String query = "DELETE FROM patching_calender_organizations WHERE orgID = ?";
 

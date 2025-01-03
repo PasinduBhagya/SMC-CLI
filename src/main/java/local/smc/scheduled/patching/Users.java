@@ -1,6 +1,8 @@
 package local.smc.scheduled.patching;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import static local.smc.common.Database.connectToDatabase;
@@ -239,8 +241,10 @@ public class Users {
         }
     }
 
-    public static void getAllUsersByOrg(int OrganizationID) {
+    public static List<Integer> getAllUsersByOrg(int OrganizationID) {
         String query = "SELECT userID, FirstName, LastName, email FROM patching_calender_users where OrganizationID=" + OrganizationID;
+
+        List<Integer> orgUsersIDs = new ArrayList<>();
 
         try (Connection connection = connectToDatabase();
              Statement statement = connection != null ? connection.createStatement() : null;
@@ -253,6 +257,7 @@ public class Users {
 
                 while (resultSet.next()) {
                     int userID = resultSet.getInt("userID");
+                    orgUsersIDs.add(userID);
                     String FirstName = resultSet.getString("FirstName");
                     String LastName = resultSet.getString("LastName");
                     String email = resultSet.getString("email");
@@ -268,5 +273,6 @@ public class Users {
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
         }
+        return orgUsersIDs;
     }
 }
