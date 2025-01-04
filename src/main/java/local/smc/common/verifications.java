@@ -67,8 +67,8 @@ public class verifications {
         int ID;
         while (true) {
             System.out.print(inputMessage);
+            String input = scanner.nextLine();
             try {
-                String input = scanner.nextLine();
                 if (input.isEmpty()){
                     return -1;
                 }

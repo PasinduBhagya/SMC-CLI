@@ -21,9 +21,14 @@ public class Tasks {
         List<Integer> orgUsersIDs = Users.getAllUsersByOrg(organizationID);
         String inputMessage3 = "Enter the primary contact user ID: ";
         int primaryContactID = checkForAllowedValues(inputMessage3, orgUsersIDs);
-
-        String inputMessage4 = "Enter the other contact user IDs [Add multiple users separated by commas]: ";
-        String otherContactIDs = checkForFormating(inputMessage4, orgUsersIDs);
+        String otherContactIDs = "";
+        if (orgUsersIDs.size() > 1){
+            String inputMessage4 = "Enter the other contact user IDs [Add multiple users separated by commas]: ";
+            otherContactIDs = checkForFormating(inputMessage4, orgUsersIDs);
+        }else{
+            System.out.println("WARNING: No other contacts to add as a secondary contacts.");
+            otherContactIDs = null;
+        }
 
         List<Integer> orgComputerIDs = Computers.getAllComputersByOrg(organizationID);
         String inputMessage5 = "Enter the Computer IDs [Add multiple computers separated by commas]: ";
@@ -39,6 +44,7 @@ public class Tasks {
                 preparedStatement.setString(1, taskName);
                 preparedStatement.setInt(2, organizationID);
                 preparedStatement.setInt(3, primaryContactID);
+                assert otherContactIDs != null;
                 preparedStatement.setString(4, otherContactIDs.isEmpty() ? null : otherContactIDs);
                 preparedStatement.setString(5, computerIDs.isEmpty() ? null : computerIDs);
 
@@ -88,7 +94,7 @@ public class Tasks {
     }
 
     public static String[] getOneTask() {
-
+        getAllTasks();
         System.out.println("----------------------------------------------------------------------------------");
         String inputMessage = "Enter the Task ID: ";
         int taskID = checkForIntegers(inputMessage);
@@ -264,7 +270,7 @@ public class Tasks {
         String inputMessage = "Enter the new Organization name (leave blank to keep current): ";
         int organizationID = (checkForUpdatedAllowedValues(inputMessage, orgIDs));
 
-        if (organizationID == -1){
+        if (organizationID == -1 || organizationID == Integer.parseInt(currentTaskData[3])){
             List<Integer> orgUsersIDs = Users.getAllUsersByOrg(Integer.parseInt(currentTaskData[3]));
             organizationID = Integer.parseInt(currentTaskData[3]);
             System.out.println("Current Primary Contact: " + currentTaskData[5]);
@@ -274,12 +280,18 @@ public class Tasks {
                 primaryContactID = Integer.parseInt(currentTaskData[4]);
             }
 
-            System.out.println("Current Other Contacts: " + currentTaskData[6]);
-            String inputMessage1 = "Enter Other Contacts: (leave blank to keep current): ";
-            otherContactIDs = checkForFormating(inputMessage1, orgUsersIDs, currentTaskData[7]);
-            if (otherContactIDs == null || otherContactIDs.isEmpty()) {
-                otherContactIDs = currentTaskData[7];
+            otherContactIDs = "";
+            if (orgUsersIDs.size() > 1){
+                System.out.println("Current Other Contacts: " + currentTaskData[6]);
+                String inputMessage1 = "Enter Other Contacts: (leave blank to keep current): ";
+                otherContactIDs = checkForFormating(inputMessage1, orgUsersIDs, currentTaskData[7]);
+                if (otherContactIDs == null || otherContactIDs.isEmpty()) {
+                    otherContactIDs = currentTaskData[7];
+                }
+            }else{
+                System.out.println("WARNING: No other contacts to add as a secondary contacts.");
             }
+
 
             System.out.println("Current computer IDs: " + currentTaskData[7]);
             List<Integer> orgComputerIDs = Computers.getAllComputersByOrg(organizationID);
@@ -293,8 +305,12 @@ public class Tasks {
                 String inputMessage3 = "Enter the primary contact user ID: ";
                 primaryContactID = checkForAllowedValues(inputMessage3, orgUsersIDs);
 
-                String inputMessage4 = "Enter the other contact user IDs [Add multiple users separated by commas]: ";
-                otherContactIDs = checkForFormating(inputMessage4, orgUsersIDs);
+                if (orgUsersIDs.size() > 1){
+                    String inputMessage4 = "Enter the other contact user IDs [Add multiple users separated by commas]: ";
+                    otherContactIDs = checkForFormating(inputMessage4, orgUsersIDs);
+                }else{
+                    System.out.println("WARNING: No other contacts to add as a secondary contacts.");
+                }
 
                 List<Integer> orgComputerIDs = Computers.getAllComputersByOrg(organizationID);
                 String inputMessage5 = "Enter the Computer IDs [Add multiple computers separated by commas]: ";

@@ -60,15 +60,7 @@ public class MainMenu {
                     break;
 
                 case "show-user":
-                    String[] userData = Users.getOneUser();
-
-                    System.out.println("+------------+---------------------+---------------------+----------------------------------+------------+");
-                    System.out.println("| User ID    | First Name          | Last Name           | Email                            | OrgID      |");
-                    System.out.println("+------------+---------------------+---------------------+----------------------------------+------------+");
-
-                    System.out.printf("| %-10d | %-19s | %-19s | %-32s | %-10d |\n",
-                            Integer.parseInt(userData[0]), userData[1], userData[2], userData[3], Integer.parseInt(userData[4]));
-                    System.out.println("+------------+---------------------+---------------------+----------------------------------+------------+");
+                    Users.getOneUser();
                     break;
 
                 case "add-user":

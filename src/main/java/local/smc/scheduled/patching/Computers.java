@@ -1,7 +1,5 @@
 package local.smc.scheduled.patching;
 
-import com.sun.jdi.Value;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
