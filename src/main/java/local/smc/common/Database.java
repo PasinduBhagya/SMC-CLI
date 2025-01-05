@@ -9,7 +9,7 @@ public class Database {
 
     public static Connection connectToDatabase() {
         Properties properties = new Properties();
-        try (FileInputStream databaseConfigs = new FileInputStream("Config/database.txt")) {
+        try (FileInputStream databaseConfigs = new FileInputStream("config/database.txt")) {
             properties.load(databaseConfigs);
 
             String url = properties.getProperty("db.url");
