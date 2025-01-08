@@ -1,0 +1,23 @@
+help, Displays the help menu.
+show-organizations, Lists all available organizations.
+show-organization, Displays details of a specific organization.
+add-organization, Adds a new organization.
+delete-organization, Deletes an organization by ID.
+update-organization, Updates the name of an organization by ID.
+show-users, Lists all users.
+show-user, Displays details of a specific user.
+add-user, Adds a new user.
+delete-user, Deletes a user by ID.
+update-user, Updates the details of a user by ID.
+show-computers, Lists all computers.
+show-computer, Displays details of a specific computer.
+add-computer, Adds a new computer.
+delete-computer, Deletes a computer by ID.
+update-computer, Updates the details of a computer by ID.
+create-patching-ticket, To create patching ticket for an organization
+create-task, Create a patching task by adding a computers of an organization with their contact points
+get-tasks, To get all tasks
+get-task, To get information about one task
+delete-task, To delete task
+update-task, To update task
+quit, Exits the program.
