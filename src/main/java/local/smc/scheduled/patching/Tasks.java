@@ -347,7 +347,7 @@ public class Tasks {
     public static void startTask(){
         String[] taskData = getOneTask();
         if(taskData!=null){
-            Ticket.createJIRA(taskData[1], taskData[1]);
+            Ticket.createJIRA(taskData[2] + "-" + taskData[1], taskData[9]);
         }
     }
 }
