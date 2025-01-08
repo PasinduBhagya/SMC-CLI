@@ -1,4 +1,4 @@
 --help,Print the helper menu
 --show-options,Print available options.
 --use-option <Option Number>,To use an option.
---settings
+--settings To view all settings
