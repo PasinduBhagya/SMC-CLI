@@ -6,7 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-public class JiraIssueCreator {
+public class JiraBack {
 
     private static final String JIRA_URL = "https://pasindub5gncomau.atlassian.net/";
     private static final String API_ENDPOINT = "/rest/api/2/issue";
@@ -15,21 +15,20 @@ public class JiraIssueCreator {
 
     public static void main(String[] args) {
         try {
-            createJiraIssue("Sample Summary", "Sample Description");
+            createJiraIssue("Sample Summary 1", "Sample Description 1");
         } catch (Exception e) {
             System.err.println("Error");
         }
     }
 
     public static void createJiraIssue(String summary, String description) throws IOException {
-        // Prepare the JSON payload for creating the issue
         JSONObject issueJson = new JSONObject();
         JSONObject fields = new JSONObject();
 
-        fields.put("project", new JSONObject().put("key", "SCRUM")); // Project key
+        fields.put("project", new JSONObject().put("key", "SCRUM"));
         fields.put("summary", summary);
         fields.put("description", description);
-        fields.put("issuetype", new JSONObject().put("name", "Task")); // Issue type (e.g., Bug, Task)
+        fields.put("issuetype", new JSONObject().put("name", "Task"));
 
         issueJson.put("fields", fields);
 
@@ -41,13 +40,11 @@ public class JiraIssueCreator {
         connection.setRequestProperty("Authorization", "Basic " + encodeCredentials(USERNAME, API_TOKEN));
         connection.setDoOutput(true);
 
-        // Write JSON data to the output stream
         try (OutputStream os = connection.getOutputStream()) {
             byte[] input = issueJson.toString().getBytes(StandardCharsets.UTF_8);
             os.write(input, 0, input.length);
         }
 
-        // Get the response code
         int responseCode = connection.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_CREATED) {
             System.out.println("Issue created successfully.");

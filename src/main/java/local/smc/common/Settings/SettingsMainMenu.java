@@ -1,5 +1,7 @@
 package local.smc.common.Settings;
 
+import local.smc.common.Ticket;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,7 +30,7 @@ public class SettingsMainMenu {
             System.out.println("Error: Unable to open the settings_help.txt file." + e);
         }
         while (true){
-            System.out.print("Enter the setting number> ");
+            System.out.print("Enter the setting number [Q or q for quit] > ");
             String userInput = scanner.nextLine();
             if (Objects.equals(userInput, "Q") || Objects.equals(userInput, "q")){
                 System.out.println("INFO: Exiting settings");
@@ -39,6 +41,7 @@ public class SettingsMainMenu {
                 switch (Integer.parseInt(userInput)){
                     case 0:
                         Jira.getJIRASettings();
+                        Ticket.getJIRASettings("Sample Summary 2", "Sample Description 2");
                         break;
                     case 1:
                         System.out.println("Loading Slack Settings.");
