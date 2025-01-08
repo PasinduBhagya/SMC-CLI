@@ -1,6 +1,7 @@
 package local.smc;
 
-import local.smc.scheduled.patching.MainMenu;
+import local.smc.common.Settings.SettingsMainMenu;
+import local.smc.scheduled.patching.PatchingMainMenu;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -11,7 +12,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String[] validArguments = {"--help", "--show-options", "--use-option"};
+        String[] validArguments = {"--help", "--show-options", "--use-option", "--settings"};
 
         System.out.println("5GN SMC CLI Tool\n");
         // Checking if Arguments are given
@@ -68,7 +69,7 @@ public class Main {
                     String optionValue = args[1];
                     switch (optionValue){
                         case "0":
-                            MainMenu.Menu();
+                            PatchingMainMenu.Menu();
                             break;
                         case "1":
                             System.out.println("INFO: Bandwidth report Generator");
@@ -81,6 +82,9 @@ public class Main {
                     System.out.println("ERROR: Option value is missing after --use-option");
                 }
                 return;
+            }
+            if (passedArgument.equals("--settings")){
+                SettingsMainMenu.loadSettings();
             }
         }
     }
