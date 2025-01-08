@@ -107,6 +107,10 @@ public class PatchingMainMenu {
                     Tasks.getOneTask();
                     break;
 
+                case "start-task":
+                    Tasks.startTask();
+                    break;
+
                 case "delete-task":
                     Tasks.deleteTask();
                     break;

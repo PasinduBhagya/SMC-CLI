@@ -18,6 +18,7 @@ create-patching-ticket, To create patching ticket for an organization
 create-task, Create a patching task by adding a computers of an organization with their contact points
 get-tasks, To get all tasks
 get-task, To get information about one task
+start-task, To create the ticket for the task
 delete-task, To delete task
 update-task, To update task
 quit, Exits the program.

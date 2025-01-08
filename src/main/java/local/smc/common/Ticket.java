@@ -15,7 +15,7 @@ public class Ticket {
             String auth = username + ":" + apiToken;
             return java.util.Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
         }
-        public static void getJIRASettings(String summary, String description){
+        public static void createJIRA(String summary, String description){
             Properties properties = new Properties();
 
             try (FileInputStream settings = new FileInputStream("./config/settings.txt")) {

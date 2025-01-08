@@ -1,7 +1,5 @@
 package local.smc.common.Settings;
 
-import local.smc.common.Ticket;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -40,8 +38,7 @@ public class SettingsMainMenu {
                 Integer.parseInt(userInput);
                 switch (Integer.parseInt(userInput)){
                     case 0:
-                        Jira.getJIRASettings();
-                        Ticket.getJIRASettings("Sample Summary 2", "Sample Description 2");
+                        TicketRelated.getJIRASettings();
                         break;
                     case 1:
                         System.out.println("Loading Slack Settings.");

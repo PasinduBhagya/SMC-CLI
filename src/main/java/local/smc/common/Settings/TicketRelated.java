@@ -5,7 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 
-public class Jira {
+public class TicketRelated {
     public static void getJIRASettings(){
         System.out.println("Loading JIRA Settings.");
         String helpFilePath = "./config/settings.txt";
@@ -27,7 +27,6 @@ public class Jira {
                 System.out.printf("| %-2d | %-28s | %-50s |\n", i++, optionValue, optionDescription);
                 System.out.println("+----+------------------------------+----------------------------------------------------+");
             }
-
 
 
         } catch (IOException e){

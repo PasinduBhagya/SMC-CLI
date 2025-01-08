@@ -1,5 +1,7 @@
 package local.smc.scheduled.patching;
 
+import local.smc.common.Ticket;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -339,6 +341,13 @@ public class Tasks {
             }
         } catch (SQLException e) {
             System.err.println("ERROR: Failed to execute query: " + e.getMessage());
+        }
+    }
+
+    public static void startTask(){
+        String[] taskData = getOneTask();
+        if(taskData!=null){
+            Ticket.createJIRA(taskData[1], taskData[1]);
         }
     }
 }
