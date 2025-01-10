@@ -2,3 +2,4 @@
 --show-options,Print available options.
 --use-option <Option Number>,To use an option.
 --settings,To view all settings
+--version,1.0
