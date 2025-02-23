@@ -1,7 +1,8 @@
 package local.smc;
 
+import local.smc.backup.NGBBackupMainMenu;
 import local.smc.common.Settings.SettingsMainMenu;
-import local.smc.scheduled.patching.PatchingMainMenu;
+import local.smc.patching.PatchingMainMenu;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -73,6 +74,9 @@ public class Main {
                             break;
                         case "1":
                             System.out.println("INFO: Bandwidth report Generator");
+                            break;
+                        case "2":
+                            NGBBackupMainMenu.Menu();
                             break;
                         default:
                             System.out.println("ERROR: Invalid option is provided.");
